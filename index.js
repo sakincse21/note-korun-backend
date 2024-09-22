@@ -13,11 +13,23 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-var serviceAccount = require(process.env.REACT_APP_PATH);
+// var serviceAccount = require(process.env.REACT_APP_PATH);
 const { getAuth } = require("firebase-admin/auth");
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert({
+    "type": `${process.env.REACT_APP_type}`,
+  "project_id": `${process.env.REACT_APP_project_id}`,
+  "private_key_id": `${process.env.REACT_APP_private_key_id}`,
+  "private_key": `${process.env.REACT_APP_private_key}`,
+  "client_email": `${process.env.REACT_APP_client_mail}`,
+  "client_id": `${process.env.REACT_APP_client_id}`,
+  "auth_uri": `${process.env.REACT_APP_auth_uri}`,
+  "token_uri": process.env.REACT_APP_token_uri,
+  "auth_provider_x509_cert_url": process.env.REACT_APP_auth_provider_x509_cert_url,
+  "client_x509_cert_url": process.env.REACT_APP_client_x509_cert_url,
+  "universe_domain": process.env.REACT_APP_universe_domain
+  })
 });
 
 
