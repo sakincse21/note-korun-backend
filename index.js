@@ -2,18 +2,28 @@ const express = require("express");
 const bodyParser = require('body-parser');
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const dotenv=require('dotenv').config();
+const dotenv = require('dotenv').config();
+const admin = require('firebase-admin');
 
 
-const uri=process.env.REACT_APP_URI;
+const uri = process.env.REACT_APP_URI;
 
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
 
+var serviceAccount = require(process.env.REACT_APP_PATH);
+const { getAuth } = require("firebase-admin/auth");
 
- 
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+
+
+
+
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -25,19 +35,21 @@ const client = new MongoClient(uri, {
 
 const findfunc = async (mail) => {
   await client.connect();
+
   try {
 
-    const collection = await client.db("notes").collection("notes");
+    const collection = client.db("notes").collection("notes");
 
     const query = { mail: `${mail}` };
 
-    const cursor = await collection.find(query);
+    const cursor = collection.find(query);
     const notes = await cursor.toArray(); // Convert cursor to array
     // console.log(notes);
     return (notes);
   } catch (error) {
     console.log(error);
     return [];
+    //logs error and sends a empty array
   }
 }
 
@@ -45,7 +57,7 @@ const insertfun = async (user) => {
   await client.connect();
   try {
 
-    const collection = await client.db("notes").collection("notes");
+    const collection = client.db("notes").collection("notes");
 
     await collection.insertOne(user);
     // console.log(user);
@@ -63,7 +75,7 @@ async function deletefun(documentId) {
 
     // Get the database and collection
 
-    const collection = await client.db("notes").collection("notes");
+    const collection = client.db("notes").collection("notes");
     // Delete the document
     const result = await collection.deleteOne({ _id: new ObjectId(documentId) });
 
@@ -81,10 +93,42 @@ async function deletefun(documentId) {
 client.connect();
 
 
-app.get('/notes/:mail', async (req, res) => {
-  const mail = req.params.mail;
-  const result = await findfunc(mail);
-  res.send(result);
+app.get('/notes', async (req, res) => {
+  const bearer = req.headers.authorization;
+  console.log(bearer);
+
+  if (bearer && bearer.startsWith('Bearer')) {
+    const idToken = bearer.slice(7);
+    // console.log(idToken);
+
+    //const idToken = tokensplit[1];
+    // console.log(idToken);
+    // idToken comes from the client app
+    await getAuth()
+      .verifyIdToken(idToken)
+      .then(async(decodedToken) => {
+        const email = decodedToken.email;
+        // const mail = req.params.mail;
+        //console.log(mail," ",email);
+        console.log(email);
+
+        const result = await findfunc(email);
+        // console.log(result);
+
+        res.send(result);
+        // console.log(result);
+        // if (mail === email) {
+        //   const result = await findfunc(mail);
+        //   res.send(result);
+        //   console.log(result);
+
+        // }
+        // ...
+      })
+      .catch((error) => {
+        res.send(false);       
+      });
+  }
 })
 
 app.post('/submit', async (req, res) => {
@@ -94,8 +138,6 @@ app.post('/submit', async (req, res) => {
 
 app.delete('/delete', async (req, res) => {
   const result = await deletefun(req.body._id);
-  // console.log(req.body._id);
-  
   res.send(true);
 })
 
