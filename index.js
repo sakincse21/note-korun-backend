@@ -108,7 +108,7 @@ client.connect();
 
 app.get('/notes', async (req, res) => {
   const bearer = req.headers.authorization;
-  // console.log(bearer);
+  console.log(bearer);
 
   if (bearer && bearer.startsWith('Bearer')) {
     const idToken = bearer.slice(7);
