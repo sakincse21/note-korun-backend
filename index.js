@@ -61,7 +61,7 @@ const findfunc = async (mail) => {
     return (notes);
   } catch (error) {
     console.log(error);
-    return [];
+    return false;
     //logs error and sends a empty array
   }
 }
@@ -144,14 +144,88 @@ app.get('/notes', async (req, res) => {
   }
 })
 
+// app.post('/submit', async (req, res) => {
+//   const result = await insertfun(req.body);
+//   res.send(result);
+// })
 app.post('/submit', async (req, res) => {
-  const result = await insertfun(req.body);
-  res.send(result);
+
+  const bearer = req.headers.authorization;
+  // console.log(bearer);
+
+  if (bearer && bearer.startsWith('Bearer')) {
+    const idToken = bearer.slice(7);
+    // console.log(idToken);
+
+    //const idToken = tokensplit[1];
+    // console.log(idToken);
+    // idToken comes from the client app
+    await getAuth()
+      .verifyIdToken(idToken)
+      .then(async (decodedToken) => {
+        const email = decodedToken.email;
+        // const mail = req.params.mail;
+        //console.log(mail," ",email);
+        // console.log(email);
+
+
+        const result = await insertfun(req.body);
+        res.send(result);
+        // console.log(result);
+        // if (mail === email) {
+        //   const result = await findfunc(mail);
+        //   res.send(result);
+        //   console.log(result);
+
+        // }
+        // ...
+      })
+      .catch((error) => {
+        res.send(false);
+      });
+  }
 })
 
+// app.delete('/delete', async (req, res) => {
+//   const result = await deletefun(req.body._id);
+//   res.send(true);
+// })
+
 app.delete('/delete', async (req, res) => {
-  const result = await deletefun(req.body._id);
-  res.send(true);
+
+  const bearer = req.headers.authorization;
+  // console.log(bearer);
+
+  if (bearer && bearer.startsWith('Bearer')) {
+    const idToken = bearer.slice(7);
+    // console.log(idToken);
+
+    //const idToken = tokensplit[1];
+    // console.log(idToken);
+    // idToken comes from the client app
+    await getAuth()
+      .verifyIdToken(idToken)
+      .then(async (decodedToken) => {
+        const email = decodedToken.email;
+        // const mail = req.params.mail;
+        //console.log(mail," ",email);
+        // console.log(email);
+
+        const result = await deletefun(req.body._id);
+        res.send(true);
+        // console.log(result);
+        // if (mail === email) {
+        //   const result = await findfunc(mail);
+        //   res.send(result);
+        //   console.log(result);
+
+        // }
+        // ...
+      })
+      .catch((error) => {
+        res.send(false);
+      });
+  }
 })
 
 app.listen(5000);
